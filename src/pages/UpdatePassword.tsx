@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { debugLog } from '@/lib/debugLog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,7 +40,7 @@ const UpdatePassword = () => {
 
     const checkExistingSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('UpdatePassword: existing session check:', !!session);
+      debugLog('UpdatePassword: existing session check:', !!session);
       if (session) {
         setSessionReady(true);
       }
@@ -49,7 +50,7 @@ const UpdatePassword = () => {
 
     // Also listen in case the token exchange hasn't happened yet
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      console.log('UpdatePassword auth event:', event);
+      debugLog('UpdatePassword auth event:', event);
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
         setSessionReady(true);
       }

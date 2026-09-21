@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, ReactNode, useCallback, useRef, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { debugLog } from '@/lib/debugLog';
 
 type Profile = {
   user_id: string;
@@ -53,10 +54,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Fetch user profile with timeout and better error handling
   const fetchUserProfile = useCallback(async (userId: string): Promise<Profile | null> => {
-    console.log('🔍 Fetching profile for userId:', userId);
+    debugLog('🔍 Fetching profile for userId:', userId);
     
     try {
-      console.log('⚙️ Making Supabase query to profiles table...');
+      debugLog('⚙️ Making Supabase query to profiles table...');
       
       // Create a timeout promise with longer timeout
       const timeoutPromise = new Promise<never>((_, reject) => {
@@ -68,8 +69,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
-        .single()
-        .abortSignal(AbortSignal.timeout(PROFILE_QUERY_TIMEOUT)); // Longer timeout
+        .abortSignal(AbortSignal.timeout(PROFILE_QUERY_TIMEOUT)) // Longer timeout
+        .single();
       
       // Race between query and timeout
       const { data: profileData, error: profileError } = await Promise.race([
@@ -77,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         timeoutPromise
       ]);
 
-      console.log('📊 Profile query result:', { 
+      debugLog('📊 Profile query result:', { 
         hasData: !!profileData, 
         data: profileData,
         error: profileError?.message,
@@ -88,7 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Additional debugging for profile data
       if (profileData) {
-        console.log('🔍 Profile data details:', {
+        debugLog('🔍 Profile data details:', {
           user_id: profileData.user_id,
           first_name: profileData.first_name,
           last_name: profileData.last_name,
@@ -100,10 +101,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (profileError) {
-        console.log('❌ Profile query failed with error:', profileError);
+        debugLog('❌ Profile query failed with error:', profileError);
         
         if (profileError.code === 'PGRST116') {
-          console.log('👤 Profile doesn\'t exist - user needs to complete setup');
+          debugLog('👤 Profile doesn\'t exist - user needs to complete setup');
           return null;
         }
         
@@ -111,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return null;
       }
       
-      console.log('✅ Profile found successfully:', profileData);
+      debugLog('✅ Profile found successfully:', profileData);
       return profileData;
     } catch (error) {
       console.error('❌ Unexpected error fetching profile:', error);
@@ -119,7 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // If it's a timeout error, return null to continue without profile
       if (error instanceof Error && error.message.includes('timeout')) {
-        console.log('⏰ Profile query timed out, continuing without profile');
+        debugLog('⏰ Profile query timed out, continuing without profile');
         return null;
       }
       
@@ -132,12 +133,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let mounted = true;
 
     const initializeAuth = async () => {
-      console.log('🔐 Initializing auth...');
+      debugLog('🔐 Initializing auth...');
       setLoading(true); // Ensure loading is true at start
       
       // Set a timeout to ensure loading gets set to false
       const loadingTimeout = setTimeout(() => {
-        console.log('⏰ Loading timeout reached, forcing loading to false');
+        debugLog('⏰ Loading timeout reached, forcing loading to false');
         setLoading(false);
       }, 2000); // Reduced to 2 seconds for faster loading
       
@@ -145,7 +146,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Get initial session
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
-        console.log('📡 Initial session check:', { 
+        debugLog('📡 Initial session check:', { 
           hasSession: !!initialSession, 
           userId: initialSession?.user?.id,
           error: error?.message 
@@ -158,30 +159,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!mounted) return;
 
         if (initialSession?.user) {
-          console.log('✅ Initial session found, setting user:', initialSession.user.id);
+          debugLog('✅ Initial session found, setting user:', initialSession.user.id);
           setSession(initialSession);
           setUser(initialSession.user);
           
           // Try to fetch profile with fallback (skip if already failed or disabled)
           if (!DISABLE_PROFILE_FETCH && !profileFetchFailedRef.current) {
             try {
-              console.log('👤 Fetching profile for user:', initialSession.user.id);
+              debugLog('👤 Fetching profile for user:', initialSession.user.id);
               const profileData = await fetchUserProfile(initialSession.user.id);
-              console.log('👤 Profile data:', profileData);
+              debugLog('👤 Profile data:', profileData);
               
               if (!mounted) return;
               
               if (profileData) {
                 setProfile(profileData);
                 setIsProfileComplete(!!(profileData.first_name && profileData.last_name));
-                console.log('✅ Profile set, complete:', !!(profileData.first_name && profileData.last_name));
+                debugLog('✅ Profile set, complete:', !!(profileData.first_name && profileData.last_name));
               } else {
-                console.log('⚠️ No profile data found - user needs setup');
+                debugLog('⚠️ No profile data found - user needs setup');
                 setProfile(null);
                 setIsProfileComplete(false);
               }
             } catch (profileError) {
-              console.log('⚠️ Profile fetch failed, marking as failed and continuing:', profileError);
+              debugLog('⚠️ Profile fetch failed, marking as failed and continuing:', profileError);
               if (!mounted) return;
               profileFetchFailedRef.current = true;
               setProfileFetchFailed(true);
@@ -189,13 +190,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               setIsProfileComplete(false);
             }
           } else {
-            console.log('⏭️ Skipping profile fetch - disabled or previously failed');
+            debugLog('⏭️ Skipping profile fetch - disabled or previously failed');
             if (!mounted) return;
             setProfile(null);
             setIsProfileComplete(false);
           }
         } else {
-          console.log('❌ No initial session found');
+          debugLog('❌ No initial session found');
           setSession(null);
           setUser(null);
           setProfile(null);
@@ -215,7 +216,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } finally {
         clearTimeout(loadingTimeout);
-        console.log('🏁 Auth initialization complete, setting loading to false');
+        debugLog('🏁 Auth initialization complete, setting loading to false');
         setLoading(false);
       }
     };
@@ -224,7 +225,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Auth state changed:', event, session?.user?.id);
+      debugLog('🔄 Auth state changed:', event, session?.user?.id);
 
       if (!mounted) return;
 
@@ -265,7 +266,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setIsProfileComplete(!!(profileData.first_name && profileData.last_name));
         }
       } catch (profileError) {
-        console.log('⚠️ Profile fetch failed in state change:', profileError);
+        debugLog('⚠️ Profile fetch failed in state change:', profileError);
         if (!mounted) return;
         profileFetchFailedRef.current = true;
         setProfileFetchFailed(true);
@@ -273,7 +274,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => {
-      console.log('🧹 Cleaning up auth subscription');
+      debugLog('🧹 Cleaning up auth subscription');
       mounted = false;
       subscription.unsubscribe();
     };

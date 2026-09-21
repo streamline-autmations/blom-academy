@@ -1,92 +1,48 @@
-# 🚀 How to Publish & Deploy Changes to Your Live Site
+# Deployment
 
-## 📋 Current Setup Overview
-Your Watercolor Workshop website is deployed on Vercel with the live URL: [https://watercolor-workshop.vercel.app](https://watercolor-workshop.vercel.app)
-Repository: [https://github.com/streamline-autmations/watercolor-workshop](https://github.com/streamline-autmations/watercolor-workshop)
-Deployment Platform: Vercel (automatic deployment from GitHub)
+## Current setup
 
-## 🔄 Deployment Process (3 Simple Steps)
+- **Live site:** [https://blom-academy.vercel.app](https://blom-academy.vercel.app)
+- **Repository:** [github.com/streamline-autmations/Blom-Academy](https://github.com/streamline-autmations/Blom-Academy)
+- **Hosting:** Vercel, auto-deploying from the `main` branch on GitHub
 
-### Step 1: Make Your Changes
-Edit any files in your project (React components, CSS, images, etc.)
-Test locally if needed using: `npm run dev`
+## Deploying a change
 
-### Step 2: Push to GitHub
-You have a convenient batch file (`push-changes.bat`) that automates this:
+1. Make your changes and test locally with `pnpm dev`.
+2. Commit and push to `main` (or open a PR — Vercel will build a preview deployment for it).
+3. Vercel picks up the push automatically, builds, and deploys. Production updates within
+   1-2 minutes of a push to `main`.
 
-**Option A: Use the Batch File (Easiest)**
-1. Double-click `push-changes.bat`
-2. Enter a commit message when prompted
-3. The script will automatically:
-   - Add all changes to Git
-   - Commit with your message
-   - Push to GitHub
-   - Trigger Vercel deployment
-
-**Option B: Manual Git Commands**
 ```bash
-git add .
-git commit -m "Your commit message here"
+git add <files>
+git commit -m "Describe the change"
 git push origin main
 ```
 
-### Step 3: Automatic Deployment
-- Vercel automatically detects changes on GitHub
-- Builds and deploys your site within 1-2 minutes
-- Your changes go live at: [https://watercolor-workshop.vercel.app](https://watercolor-workshop.vercel.app)
-
-## 🛠️ Development Commands
+## Local development
 
 ```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
+pnpm install
+pnpm dev        # start dev server
+pnpm build      # production build
+pnpm preview    # preview the production build locally
 ```
 
-## 📁 Key Files to Edit
+## Mobile (Capacitor)
 
-- **Pages**: `src/pages/` - Main application pages
-- **Components**: `src/components/` - Reusable UI components
-- **Styles**: `src/globals.css` - Global CSS styles
-- **Data**: `src/data/` - Mock data and types
-- **Images**: `public/` - Static assets
+The repo includes Capacitor scaffolding for a native Android/iOS shell, but no app has
+been published to either store yet. Before doing a native build, sync the web build into
+the native projects:
 
-## 🔧 Troubleshooting
-
-- **Build fails**: Check console for errors, ensure all dependencies are installed
-- **Changes not showing**: Clear browser cache or wait 1-2 minutes for deployment
-- **Git issues**: Make sure you're in the project directory and have Git configured
-
-## 📱 Mobile Development
-
-This project also supports mobile app development with Capacitor:
 ```bash
-# Add iOS platform
-npx cap add ios
-
-# Add Android platform  
-npx cap add android
-
-# Build and sync
-npm run build
+pnpm build
 npx cap sync
 ```
 
-## 🎨 Customization Tips
+## Troubleshooting
 
-- Edit `tailwind.config.ts` for theme customization
-- Modify `src/data/mock.ts` for course content
-- Update `src/components/ui/` for component styling
-- Change `public/` images for branding
-
----
-
-**Happy coding! 🎨✨**
+- **Build fails on Vercel:** check the build logs first; reproduce locally with `pnpm build`.
+- **Changes not showing:** hard-refresh / clear the PWA's cached service worker, or wait
+  for the deployment to finish (Vercel dashboard shows status).
+- **Env vars:** required variables are listed in `.env.example`; missing ones will surface
+  as Supabase client errors at runtime, not build time.

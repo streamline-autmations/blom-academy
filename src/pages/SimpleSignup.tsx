@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { debugLog } from '@/lib/debugLog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,11 +71,11 @@ export default function SimpleSignup() {
     const phone = formData.get('phone') as string;
 
     try {
-      console.log('🚀 Starting simple signup process...', { hasInviteToken: !!inviteToken });
+      debugLog('🚀 Starting simple signup process...', { hasInviteToken: !!inviteToken });
 
       // Auto-generate username from email
       const username = email.split('@')[0];
-      console.log('📝 Generated username from email:', username);
+      debugLog('📝 Generated username from email:', username);
 
       // Sign up the user
       const { data: signupData, error: signupError } = await supabase.auth.signUp({
@@ -118,7 +119,7 @@ export default function SimpleSignup() {
         throw new Error(`Signup failed: ${message}`);
       }
 
-      console.log('✅ Signup completed');
+      debugLog('✅ Signup completed');
 
       const createdUser = signupData?.user;
       const createdSession = signupData?.session;
@@ -147,10 +148,10 @@ export default function SimpleSignup() {
       }
 
       const user = createdUser;
-      console.log('👤 User found:', user.id);
+      debugLog('👤 User found:', user.id);
 
       // Skip all triggers and webhooks - do everything manually
-      console.log('🔄 Creating profile and enrollment manually (bypassing all triggers)...');
+      debugLog('🔄 Creating profile and enrollment manually (bypassing all triggers)...');
 
       // Create profile manually with username
       const { error: profileError } = await supabase
@@ -167,21 +168,21 @@ export default function SimpleSignup() {
       if (profileError) {
         console.error('❌ Profile creation failed:', profileError);
         // Don't throw error - just log it and continue
-        console.log('⚠️ Profile creation failed, but continuing...');
+        debugLog('⚠️ Profile creation failed, but continuing...');
       } else {
-        console.log('✅ Profile created successfully with username:', username);
+        debugLog('✅ Profile created successfully with username:', username);
       }
 
       // If there's an invite token, redeem it and redirect to course
       if (inviteToken) {
-        console.log('🎫 Processing invite token after signup:', inviteToken);
+        debugLog('🎫 Processing invite token after signup:', inviteToken);
 
         try {
           const inviteData = await claimCourseInviteSecurely(inviteToken);
 
           if (inviteData && inviteData.course_id) {
             if (inviteData.course_slug) {
-              console.log('✅ Invite redeemed successfully, redirecting to course:', inviteData.course_slug);
+              debugLog('✅ Invite redeemed successfully, redirecting to course:', inviteData.course_slug);
               showSuccess('Account created and course access granted!');
               navigate(`/course/${inviteData.course_slug}`);
               return;

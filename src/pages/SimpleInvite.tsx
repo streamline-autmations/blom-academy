@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { claimCourseInviteSecurely } from '../lib/claimCourseInvite';
+import { debugLog } from '../lib/debugLog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Alert, AlertDescription } from '../components/ui/alert';
@@ -16,7 +17,7 @@ export default function SimpleInvite() {
   const [courseId, setCourseId] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('🎫 SimpleInvite useEffect triggered:', {
+    debugLog('🎫 SimpleInvite useEffect triggered:', {
       token,
       hasSession: !!session,
       hasUser: !!user,
@@ -25,28 +26,28 @@ export default function SimpleInvite() {
     });
 
     if (!token) {
-      console.log('❌ No invite token found in URL');
+      debugLog('❌ No invite token found in URL');
       setStatus('error');
       setMessage('No invite token provided. Please check your invite link.');
       return;
     }
 
     if (loading) {
-      console.log('⏳ Still loading auth state');
+      debugLog('⏳ Still loading auth state');
       setStatus('loading');
       setMessage('Loading...');
       return;
     }
 
     if (!session || !user) {
-      console.log('👤 User not logged in, showing signup options');
+      debugLog('👤 User not logged in, showing signup options');
       setStatus('waiting');
       setMessage('Please create an account to accept this invite.');
       return;
     }
 
     // User is logged in - process the invite directly
-    console.log('🎫 User is logged in, processing invite');
+    debugLog('🎫 User is logged in, processing invite');
     processInvite(token);
   }, [token, session, user, loading]);
 
@@ -55,16 +56,16 @@ export default function SimpleInvite() {
       setStatus('loading');
       setMessage('Processing your invite...');
 
-      console.log('🎫 Processing invite token:', inviteToken);
-      console.log('👤 User ID:', user?.id);
+      debugLog('🎫 Processing invite token:', inviteToken);
+      debugLog('👤 User ID:', user?.id);
 
       // Call the Supabase RPC function to claim the course invite
       const data = await claimCourseInviteSecurely(inviteToken);
 
-      console.log('Invite claim result:', { data });
+      debugLog('Invite claim result:', { data });
 
       if (data && data.course_id) {
-        console.log('✅ Invite claimed successfully, course ID:', data.course_id);
+        debugLog('✅ Invite claimed successfully, course ID:', data.course_id);
         setStatus('success');
         setMessage('Invite accepted successfully! Redirecting to your course...');
         setCourseId(data.course_id);

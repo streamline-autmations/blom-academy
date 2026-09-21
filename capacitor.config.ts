@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.example.stellarkrakenswim',
+  appId: 'co.za.blomcosmetics.academy',
   appName: 'BLOM Academy',
   webDir: 'dist'
 };

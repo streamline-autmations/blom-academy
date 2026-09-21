@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { LoaderCircle, CheckCircle, AlertCircle, User, BookOpen } from 'lucide-react';
 import { courses } from '@/data/mock';
+import { debugLog } from '@/lib/debugLog';
 import { supabase } from '@/lib/supabase';
 
 interface UserAccess {
@@ -58,7 +59,7 @@ export default function AdminAccess() {
     setResult(null);
 
     try {
-      console.log('🎯 Granting access for user:', userId, 'courses:', selectedCourses);
+      debugLog('🎯 Granting access for user:', userId, 'courses:', selectedCourses);
       
       const { data, error: rpcError } = await supabase.rpc('enroll_user_by_id', {
         p_user_id: userId.trim(),
@@ -72,7 +73,7 @@ export default function AdminAccess() {
         return;
       }
 
-      console.log('✅ RPC Result:', data);
+      debugLog('✅ RPC Result:', data);
       setResult(data);
 
       // Fetch user's current access after successful enrollment

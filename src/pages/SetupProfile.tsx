@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { debugLog } from '@/lib/debugLog';
 import { useAuth } from '@/contexts/AuthProvider';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -78,7 +79,7 @@ export default function SetupProfile() {
 
   // If no invite token, redirect to login
   useEffect(() => {
-    console.log('🔍 SetupProfile useEffect:', {
+    debugLog('🔍 SetupProfile useEffect:', {
       inviteToken,
       currentUrl: window.location.href,
       searchParams: Object.fromEntries(searchParams.entries()),
@@ -87,7 +88,7 @@ export default function SetupProfile() {
     });
     
     if (!inviteToken) {
-      console.log('🚫 No invite token found, redirecting to login');
+      debugLog('🚫 No invite token found, redirecting to login');
       navigate('/login');
     }
   }, [inviteToken, navigate, searchParams]);
@@ -192,13 +193,13 @@ export default function SetupProfile() {
     const toastId = toast.loading('Setting up your account...');
 
     try {
-      console.log('🚀 Starting FAST account setup process...');
+      debugLog('🚀 Starting FAST account setup process...');
       
       let currentUser = user;
       
       // For invite users, sign them up if needed
       if (isInviteUser && !user) {
-        console.log('🎫 Signing up invite user...');
+        debugLog('🎫 Signing up invite user...');
         
         const { data: signupData, error: signupError } = await supabase.auth.signUp({
           email: values.email,
@@ -216,7 +217,7 @@ export default function SetupProfile() {
           throw new Error(`Signup failed: ${signupError.message}`);
         }
         
-        console.log('✅ Signup completed');
+        debugLog('✅ Signup completed');
         
         // Wait for session to be established
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -236,7 +237,7 @@ export default function SetupProfile() {
         throw new Error('User not found');
       }
 
-      console.log('👤 User found:', currentUser.id);
+      debugLog('👤 User found:', currentUser.id);
 
           // Save profile using the simple function
           const { error: profileError } = await supabase.rpc('create_user_profile_simple', {
@@ -251,10 +252,10 @@ export default function SetupProfile() {
             throw new Error(`Failed to save profile: ${profileError.message}`);
           }
 
-          console.log('✅ Profile saved successfully');
+          debugLog('✅ Profile saved successfully');
 
       // Always redirect to home after account setup
-      console.log('🏠 Account setup complete - redirecting to home');
+      debugLog('🏠 Account setup complete - redirecting to home');
       navigate('/home');
 
       toast.success('Account setup complete!', { id: toastId });

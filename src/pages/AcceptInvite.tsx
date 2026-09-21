@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useCourseInvites } from '../hooks/useCourseInvites';
 import { supabase } from '../lib/supabase';
+import { debugLog } from '../lib/debugLog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Alert, AlertDescription } from '../components/ui/alert';
@@ -74,7 +75,7 @@ export default function AcceptInvite() {
         setMessage('Processing your invite...');
 
         if (import.meta.env.DEV) {
-          console.log('🎫 Claiming invite', { inviteToken, userId: user.id });
+          debugLog('🎫 Claiming invite', { inviteToken, userId: user.id });
         }
 
         // Belt-and-suspenders: ensure the logged-in user has a profile row.
