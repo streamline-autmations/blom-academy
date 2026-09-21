@@ -91,13 +91,20 @@ storefront repo.
 
 ## Screenshots
 
-_Add screenshots of the course library, lesson player, and admin invite screen here
-(e.g. `docs/screenshots/`), then reference them below:_
+### Course library
 
-```markdown
-![Course library](docs/screenshots/explore.png)
-![Lesson player](docs/screenshots/lesson-player.png)
-```
+![Course library](docs/screenshots/course-library-desktop.png)
+
+### Lesson player
+
+![Lesson player](docs/screenshots/lesson-player-desktop.png)
+
+### Mobile / PWA
+
+![Mobile](docs/screenshots/mobile.png)
+
+A course-detail capture is also in `docs/screenshots/`. No admin invite screenshot —
+that needs a separate admin-level account.
 
 ## Running locally
 
