@@ -66,6 +66,17 @@ export const useUserState = () => {
     return (completedLessons.length / courseLessons.length) * 100;
   }, [progress]);
 
+  // Latest time a lesson in this course was marked complete (ISO string), or null if none.
+  const getCourseCompletedAt = useCallback((courseId: string) => {
+    const courseModuleIds = modules.filter(m => m.courseId === courseId).map(m => m.id);
+    const courseLessonIds = lessons.filter(l => courseModuleIds.includes(l.moduleId)).map(l => l.id);
+    const times = progress
+      .filter(p => p.completed && courseLessonIds.includes(p.lessonId))
+      .map(p => p.updatedAt)
+      .sort();
+    return times.length ? times[times.length - 1] : null;
+  }, [progress]);
+
   const getModuleProgress = useCallback((moduleId: string) => {
     const moduleLessons = lessons.filter(l => l.moduleId === moduleId);
     if (moduleLessons.length === 0) return 0;
@@ -126,6 +137,7 @@ export const useUserState = () => {
     updateLessonProgress,
     toggleLessonComplete,
     getCourseProgress,
+    getCourseCompletedAt,
     getModuleProgress,
     continueWatchingList,
     getEnrolledCourses,

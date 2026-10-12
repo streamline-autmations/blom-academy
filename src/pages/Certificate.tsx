@@ -1,17 +1,32 @@
+import { useEffect, useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { getCourseData } from '@/data/mock';
 import { useUserState } from '@/hooks/useUserState';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { Button } from '@/components/ui/button';
 import { Download, Award, Snowflake } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { downloadCertificatePdf } from '@/lib/certificatePdf';
 
 const Certificate = () => {
   const { slug } = useParams<{ slug: string }>();
   const { profile } = useAuth();
-  const { getCourseProgress } = useUserState();
+  const { getCourseProgress, getCourseCompletedAt } = useUserState();
+  // First computed completion date per course, kept so rewatching lessons can't change it.
+  const [savedDates, setSavedDates] = useLocalStorage<Record<string, string>>('blom:certificateDates', {});
+  const [downloading, setDownloading] = useState(false);
   const data = getCourseData(slug || '');
+  const courseId = data?.course.id ?? '';
+  const isComplete = !!data && getCourseProgress(courseId) >= 100;
+  const completedAt = savedDates[courseId] ?? getCourseCompletedAt(courseId) ?? new Date().toISOString();
+
+  useEffect(() => {
+    if (isComplete && !savedDates[courseId]) {
+      setSavedDates(prev => ({ ...prev, [courseId]: completedAt }));
+    }
+  }, [isComplete, courseId, completedAt, savedDates, setSavedDates]);
 
   if (!data) {
     return <Navigate to="/400" replace />;
@@ -28,14 +43,29 @@ const Certificate = () => {
   }
 
   const userName = profile ? `${profile.first_name} ${profile.last_name}` : 'Valued Student';
-  const completionDate = new Date().toLocaleDateString('en-US', {
+  const completionDate = new Date(completedAt).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
 
-  const handleDownload = () => {
-    toast.success("Your certificate download has started!");
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      await downloadCertificatePdf({
+        name: userName,
+        courseTitle: course.title,
+        date: completionDate,
+        accentColor: isHolidayCourse ? '#f472b6' : '#4da6ff',
+        fileName: `BLOM-Academy-Certificate-${course.slug}.pdf`,
+      });
+      toast.success("Your certificate download has started!");
+    } catch (error) {
+      console.error('Certificate download failed', error);
+      toast.error("We couldn't create your certificate. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -77,9 +107,9 @@ const Certificate = () => {
           </div>
         </div>
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-          <Button onClick={handleDownload} className="rounded-full font-bold">
+          <Button onClick={handleDownload} disabled={downloading} className="rounded-full font-bold">
             <Download className="w-4 h-4 mr-2" />
-            Download Certificate
+            {downloading ? 'Preparing…' : 'Download Certificate'}
           </Button>
           <Button variant="outline" asChild className="rounded-full">
             <Link to={`/course/${course.slug}`}>Back to Course</Link>
